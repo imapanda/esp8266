@@ -27,8 +27,8 @@ void setup()
     pinMode(clkInterruptPin, INPUT);
     pinMode(pushButtonPin, INPUT);
     
-    attachInterrupt(digitalPinToInterrupt(clkInterrupt), interrupt_function, RISING);
-    attachInterrupt(digitalPinToInterrupt(pushButtonInterrupt), pushButton_function, RISING);
+    attachInterrupt(digitalPinToInterrupt(clkInterruptPin), clkInterrupt, RISING);
+    attachInterrupt(digitalPinToInterrupt(pushButtonPin), pushButtonInterrupt, RISING);
 }
 
 void loop()
