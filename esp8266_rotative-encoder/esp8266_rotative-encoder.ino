@@ -15,6 +15,10 @@ ICACHE_RAM_ATTR void clkInterrupt()
 
 ICACHE_RAM_ATTR void pushButtonInterrupt()
 {
+    // attempt to filter the input to reduce the bounces...
+    char initialState=digitalRead(pushButtonPin);
+    while(digitalRead(pushButtonPin)==initialState)
+        delayMicroseconds(50);
     pushButtonCount++;
 }
 
