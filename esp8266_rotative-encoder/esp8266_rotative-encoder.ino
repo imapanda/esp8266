@@ -18,8 +18,14 @@
 #define DEBOUNCE_TIMER_INTERVAL_MS        1
 #define MAX_BOUND_COUNT (MAX_BOUND_DURATION_MS/DEBOUNCE_TIMER_INTERVAL_MS)
 
-// Push button debounce stuff
 
+// GPIO definition
+const int clkInterruptPin = 14; // GPIO14, pin D5
+const int dataPin = 12;         // GPIO12, pin D6
+const int pushButtonPin = 2;    // GPIO2,  pin D4
+
+
+// Push button debounce stuff
 Ticker debounceTimer;
 
 volatile bool oldPushButtonState = false;
@@ -29,26 +35,24 @@ volatile int pushButtonPushedCount = 0;
 volatile int pushButtonReleasedCount = 0;
 
 
-// GPIO definition
-const int clkInterruptPin = 14; // GPIO14, pin D5
-const int dataPin = 12;         // GPIO12, pin D6
-const int pushButtonPin = 2;    // GPIO2,  pin D4
-
-
+// Encoder stuff
 volatile int encoderPos = 0;
 char oldDataPinState = 0;
 
+
+// Used to print to serial
 unsigned int loopCounter = 0;
 
-//ICACHE_RAM_ATTR décorateur de fonction qui indique au linker que la fonction doit etre mise dans une zone memoire spéciale qui est dédiée aux interruptions
-// Avec une rapidité d'accès plus importante, dépend des processeurs au besoin
-ICACHE_RAM_ATTR void clkInterrupt()
-{
+
+// ICACHE_RAM_ATTR function decorator which indicates to the linker that
+// the function must be put in a special memory area which is dedicated to interrupts,
+// with higher access speed, depends on processors as needed
+// Without the ICACHE_RAM_ATTR decorator, esp8266 throws ISR not in IRAM! and crashes
+ICACHE_RAM_ATTR void clkInterrupt() {
   encoderPos += digitalRead(dataPin) == HIGH ? 1 : -1;
 }
 
-void debounceHandler()
-{
+void debounceHandler() {
   // read the current push button state
   bool newPushButtonState = getPushButtonState();
 
@@ -74,8 +78,7 @@ void debounceHandler()
       pushButtonStableLevelCount = 0;
     }
   }
-  else
-  {
+  else {
     if (!newPushButtonState) { // button stills released
       pushButtonStableLevelCount++;
     }
@@ -91,13 +94,13 @@ void debounceHandler()
   }
 }
 
+
 bool getPushButtonState(void) {
   return digitalRead(pushButtonPin) == HIGH;
 }
 
 
-void setup()
-{
+void setup() {
 
   Serial.begin(9600);
 
@@ -112,8 +115,8 @@ void setup()
   debounceTimer.attach(DEBOUNCE_TIMER_INTERVAL_MS / 1000., debounceHandler); // debounce period in [ms]
 }
 
-void loop()
-{
+
+void loop() {
   if (oldDataPinState != digitalRead(dataPin)) {
     oldDataPinState = digitalRead(dataPin);
     delayMicroseconds(100000);
