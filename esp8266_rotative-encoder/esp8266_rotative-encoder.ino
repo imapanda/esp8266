@@ -18,7 +18,6 @@
 #define DEBOUNCE_TIMER_INTERVAL_MS        1
 #define MAX_BOUND_COUNT (MAX_BOUND_DURATION_MS/DEBOUNCE_TIMER_INTERVAL_MS)
 
-
 // GPIO definition
 const int clkInterruptPin = 14; // GPIO14, pin D5
 const int dataPin = 12;         // GPIO12, pin D6
@@ -36,6 +35,7 @@ volatile int pushButtonReleasedCount = 0;
 
 
 // Encoder stuff
+#define ENCODER_STEPS 10
 volatile int encoderPos = 0;
 char oldDataPinState = 0;
 
@@ -43,13 +43,22 @@ char oldDataPinState = 0;
 // Used to print to serial
 unsigned int loopCounter = 0;
 
+// LEDs GPIO pinout
+int RGBLED_RED   = 5;
+int RGBLED_GREEN = 4;
+int RGBLED_BLUE  = 13;
 
 // ICACHE_RAM_ATTR function decorator which indicates to the linker that
 // the function must be put in a special memory area which is dedicated to interrupts,
 // with higher access speed, depends on processors as needed
 // Without the ICACHE_RAM_ATTR decorator, esp8266 throws ISR not in IRAM! and crashes
 ICACHE_RAM_ATTR void clkInterrupt() {
-  encoderPos += digitalRead(dataPin) == HIGH ? 1 : -1;
+  //Adds or substract 1 to encoder pos multiplied by ENCODER_STEPS
+  encoderPos += digitalRead(dataPin) == HIGH ? -1 * ENCODER_STEPS : +1 * ENCODER_STEPS;
+
+  // encoderPos between 0 and 255 for LED control
+  if(encoderPos < 0)  { encoderPos=0;  }
+  if(encoderPos > 250){ encoderPos=250;}
 }
 
 void debounceHandler() {
@@ -99,10 +108,52 @@ bool getPushButtonState(void) {
   return digitalRead(pushButtonPin) == HIGH;
 }
 
+void rgb_led_write(int led_mode, int intensity){
+
+  // OFF mode
+  digitalWrite(RGBLED_RED, LOW); // TODO : replace by analogWrite
+  digitalWrite(RGBLED_BLUE, LOW); // TODO : replace by analogWrite
+  digitalWrite(RGBLED_GREEN, LOW); // TODO : replace by analogWrite
+  //analogWrite(RGBLED_RED, 0);
+  //analogWrite(RGBLED_BLUE, 0);
+  //analogWrite(RGBLED_GREEN, 0);
+  
+  intensity = 255; // TODO : temp
+  
+  if(led_mode == 0){
+    digitalWrite(RGBLED_RED, HIGH); // TODO : replace by analogWrite
+    //analogWrite(RGBLED_RED, intensity);
+    return;
+  }
+  if(led_mode ==1){
+    digitalWrite(RGBLED_GREEN, HIGH); // TODO : replace by analogWrite
+    //analogWrite(RGBLED_GREEN, intensity);
+    return;
+  }
+  if(led_mode ==2){
+    digitalWrite(RGBLED_BLUE, HIGH); // TODO : replace by analogWrite
+    //analogWrite(RGBLED_BLUE, intensity);
+    return;
+  }
+
+  // White mode
+  digitalWrite(RGBLED_RED, HIGH); // TODO : replace by analogWrite
+  digitalWrite(RGBLED_BLUE, HIGH); // TODO : replace by analogWrite
+  digitalWrite(RGBLED_GREEN, HIGH); // TODO : replace by analogWrite
+//  analogWrite(RGBLED_RED, intensity);
+//  analogWrite(RGBLED_BLUE, intensity);
+//  analogWrite(RGBLED_GREEN, intensity);
+  return;
+
+}
 
 void setup() {
 
   Serial.begin(9600);
+
+  pinMode(RGBLED_RED, OUTPUT);
+  pinMode(RGBLED_GREEN, OUTPUT);
+  pinMode(RGBLED_BLUE, OUTPUT);
 
   pinMode(dataPin, INPUT_PULLUP);
   pinMode(clkInterruptPin, INPUT);
@@ -129,7 +180,12 @@ void loop() {
   Serial.print(pushButtonPushedCount, DEC);
   Serial.print(" / ");
   Serial.print(pushButtonReleasedCount, DEC);
+  Serial.print(" - ");
+  Serial.print(pushButtonReleasedCount%4, DEC);
   Serial.println();
+
+  rgb_led_write(pushButtonReleasedCount%4, encoderPos);
+  
   delayMicroseconds(125000);
   loopCounter++;
 }
