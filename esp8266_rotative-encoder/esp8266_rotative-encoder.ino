@@ -1,46 +1,132 @@
+/*********
+  24.04.2022
+  C.BRESSY
+  P.BRESSY
 
-int clkInterruptPin = 14; // GPIO14, pin D5
-int dataPin = 12;         // GPIO12, pin D6
-int pushButtonPin = 2;    // GPIO2, pin D4
+  Using rotative encoder with software debounce for push button
+
+  Pinout of rotative encoder :
+  GND, +, SW, DT, CLK
+
+*********/
+
+// software debounce by using a timer
+#include <Ticker.h>
+// set the debounce time here in [ms] ; 40 seems to be a good value :)
+#define MAX_BOUND_DURATION_MS 40
+
+#define DEBOUNCE_TIMER_INTERVAL_MS        1
+#define MAX_BOUND_COUNT (MAX_BOUND_DURATION_MS/DEBOUNCE_TIMER_INTERVAL_MS)
+
+// Push button debounce stuff
+
+Ticker debounceTimer;
+
+volatile bool oldPushButtonState = false;
+volatile int pushButtonStableLevelCount = 0;
+
+volatile int pushButtonPushedCount = 0;
+volatile int pushButtonReleasedCount = 0;
+
+
+// GPIO definition
+const int clkInterruptPin = 14; // GPIO14, pin D5
+const int dataPin = 12;         // GPIO12, pin D6
+const int pushButtonPin = 2;    // GPIO2,  pin D4
+
 
 volatile int encoderPos = 0;
-volatile int pushButtonCount = 0;
+char oldDataPinState = 0;
 
 unsigned int loopCounter = 0;
 
+//ICACHE_RAM_ATTR décorateur de fonction qui indique au linker que la fonction doit etre mise dans une zone memoire spéciale qui est dédiée aux interruptions
+// Avec une rapidité d'accès plus importante, dépend des processeurs au besoin
 ICACHE_RAM_ATTR void clkInterrupt()
 {
-    encoderPos += digitalRead(dataPin) == HIGH ? 1 : -1;
+  encoderPos += digitalRead(dataPin) == HIGH ? 1 : -1;
 }
-ICACHE_RAM_ATTR void pushButtonInterrupt()
+
+void debounceHandler()
 {
-    pushButtonCount++;
+  // read the current push button state
+  bool newPushButtonState = getPushButtonState();
+
+  // same state as previous => exit
+  if (newPushButtonState == oldPushButtonState) {
+    return;
+  }
+
+
+  // if old state is low (the user pushes the button)
+  if (!oldPushButtonState) {
+
+    if (newPushButtonState) { // button stills pushed
+      pushButtonStableLevelCount++;
+    }
+    else { // button released
+      pushButtonStableLevelCount = 0;
+    }
+    // button stills pushed enough longer to say "OK, no more bounce"
+    if (pushButtonStableLevelCount >= MAX_BOUND_COUNT) {
+      oldPushButtonState = true; // set internal state to PUSHED
+      pushButtonPushedCount++;
+      pushButtonStableLevelCount = 0;
+    }
+  }
+  else
+  {
+    if (!newPushButtonState) { // button stills released
+      pushButtonStableLevelCount++;
+    }
+    else { // button repushed
+      pushButtonStableLevelCount = 0;
+    }
+    // button stills released enough longer to say "OK, no more bounce"
+    if (pushButtonStableLevelCount >= MAX_BOUND_COUNT) {
+      oldPushButtonState = false; // set internal state to RELEASED
+      pushButtonReleasedCount++;
+      pushButtonStableLevelCount = 0;
+    }
+  }
 }
+
+bool getPushButtonState(void) {
+  return digitalRead(pushButtonPin) == HIGH;
+}
+
 
 void setup()
 {
 
-    Serial.begin(9600);
+  Serial.begin(9600);
 
-    pinMode(dataPin, INPUT_PULLUP);
-    pinMode(clkInterruptPin, INPUT);
-    pinMode(pushButtonPin, INPUT);
-    
-    attachInterrupt(digitalPinToInterrupt(clkInterruptPin), clkInterrupt, RISING);
-    attachInterrupt(digitalPinToInterrupt(pushButtonPin), pushButtonInterrupt, RISING);
-    
+  pinMode(dataPin, INPUT_PULLUP);
+  pinMode(clkInterruptPin, INPUT);
+  pinMode(pushButtonPin, INPUT);
+
+  attachInterrupt(digitalPinToInterrupt(clkInterruptPin), clkInterrupt, RISING);
+  oldDataPinState = digitalRead(dataPin);
+
+  oldPushButtonState = getPushButtonState();
+  debounceTimer.attach(DEBOUNCE_TIMER_INTERVAL_MS / 1000., debounceHandler); // debounce period in [ms]
 }
 
 void loop()
 {
-  
+  if (oldDataPinState != digitalRead(dataPin)) {
+    oldDataPinState = digitalRead(dataPin);
+    delayMicroseconds(100000);
+  }
 
-    Serial.print(loopCounter);
-    Serial.print(" encoderPos:");
-    Serial.print(encoderPos, DEC);
-    Serial.print(" pushButtonCount:");
-    Serial.print(pushButtonCount, DEC);
-    Serial.println();
-    delayMicroseconds(125000);
-    loopCounter++;
+  Serial.print(loopCounter);
+  Serial.print(" encoderPos:");
+  Serial.print(encoderPos, DEC);
+  Serial.print(" pushButtonCount:");
+  Serial.print(pushButtonPushedCount, DEC);
+  Serial.print(" / ");
+  Serial.print(pushButtonReleasedCount, DEC);
+  Serial.println();
+  delayMicroseconds(125000);
+  loopCounter++;
 }
