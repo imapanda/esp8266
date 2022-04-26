@@ -5,6 +5,8 @@ playing with esp8266
 
 ### Best Pins to Use – ESP8266
 
+9 general-purpose I/O pins i.e. D0 to D8.
+
 One important thing to notice about ESP8266 is that the GPIO number doesn’t match the label on the board silkscreen. For example, D0 corresponds to GPIO16 and D1 corresponds to GPIO5.
 
 The following table shows the correspondence between the labels on the silkscreen and the GPIO number as well as what pins are the best to use in your projects, and which ones you need to be cautious.
