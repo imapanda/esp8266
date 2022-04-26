@@ -93,6 +93,13 @@ The pins used as SPI in the ESP8266 are:
 
 ESP8266 allows software PWM in all I/O pins: GPIO0 to GPIO15. PWM signals on ESP8266 have 10-bit resolution.
 
+
+### Interrupts
+
+Pin interrupts are supported through attachInterrupt, functions. 
+Interrupts may be attached to any GPIO pin, except GPIO16. 
+Standard Arduino interrupt types are supported: CHANGE, RISING, FALLING.
+
 ## Issues
 
 ### COM port not recognized
