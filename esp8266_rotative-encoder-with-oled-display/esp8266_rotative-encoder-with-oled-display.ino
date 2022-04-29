@@ -64,7 +64,7 @@ int RGBLED_BLUE  = 13;
 // ICACHE_RAM_ATTR function decorator which indicates to the linker that
 // the function must be put in a special memory area which is dedicated to interrupts,
 // with higher access speed, depends on processors as needed
-// Without the ICACHE_RAM_ATTR decorator, esp8266 throws ISR not in IRAM! and crashes
+// Without the ICACHE_RAM_ATTR decorator, esp8266 throws error "ISR not in IRAM!" and crashes/reboots
 ICACHE_RAM_ATTR void clkInterrupt() {
   //Adds or substract 1 to encoder pos multiplied by ENCODER_STEPS
   encoderPos += digitalRead(dataPin) == HIGH ? -1 * ENCODER_STEPS : +1 * ENCODER_STEPS;
@@ -116,7 +116,6 @@ void debounceHandler() {
   }
 }
 
-
 bool getPushButtonState(void) {
   return digitalRead(pushButtonPin) == HIGH;
 }
@@ -160,6 +159,44 @@ void rgb_led_write(int led_mode, int intensity){
 
 }
 
+void write_to_screen(){
+  char buffer_c[20];
+  
+  Serial.println("Writing to screen...");
+  ecranOLED.clearDisplay();
+  ecranOLED.setCursor(0, 0);
+  
+  //ecranOLED.println(loopCounter);
+  //char s[6 + 1] = "999999";
+  //sprintf(s, "%-6d", loopCounter); // print to string ( minus is left justified)
+  //sprintf(s, "%17d", loopCounter); // print to string
+  //dtostrf(float_value, min_width, num_digits_after_decimal, where_to_store_string)
+  
+
+  dtostrf(pushButtonReleasedCount%4, 1, 0, buffer_c);
+  ecranOLED.print("Mode : ");
+  ecranOLED.print(buffer_c);
+  
+  dtostrf(loopCounter, 12, 0, buffer_c);
+  Serial.println(buffer_c);
+  ecranOLED.println(buffer_c);
+  
+  ecranOLED.print("Position : ");
+  //dtostrf(float_value, min_width, num_digits_after_decimal, where_to_store_string)
+  dtostrf(encoderPos, 9, 0, buffer_c);
+  ecranOLED.println(buffer_c);
+  
+  ecranOLED.print("PushedCount: ");
+  ecranOLED.print(pushButtonPushedCount, DEC);
+  ecranOLED.print(" / ");
+  ecranOLED.print(pushButtonReleasedCount, DEC);
+  
+
+  ecranOLED.display();
+  
+  Serial.println("Writing to screen done.");
+}
+
 void setup() {
 
   Serial.begin(9600);
@@ -171,12 +208,13 @@ void setup() {
   ecranOLED.clearDisplay();
   ecranOLED.display();
 
-  ecranOLED.setTextSize(2);  // Caracters size (1 to 3)
+  ecranOLED.setTextSize(1);  // Caracters size (1 to 3)
   ecranOLED.setCursor(0, 0);
 
   ecranOLED.setTextColor(SSD1306_WHITE);
 
-  ecranOLED.println("ecranOLED");
+  ecranOLED.println("github.com/imapanda");
+  ecranOLED.println("2022.04.29");
   ecranOLED.display();
 
   pinMode(RGBLED_RED, OUTPUT);
@@ -192,13 +230,18 @@ void setup() {
 
   oldPushButtonState = getPushButtonState();
   debounceTimer.attach(DEBOUNCE_TIMER_INTERVAL_MS / 1000., debounceHandler); // debounce period in [ms]
+
+  delay(1000); //Wait 2 seconds for init
+  
+  ecranOLED.clearDisplay();
+  ecranOLED.setCursor(0, 0);
 }
 
 
 void loop() {
   if (oldDataPinState != digitalRead(dataPin)) {
     oldDataPinState = digitalRead(dataPin);
-    delayMicroseconds(100000);
+    delayMicroseconds(100000); // = .1 sec
   }
 
   Serial.print(loopCounter);
@@ -212,7 +255,8 @@ void loop() {
   Serial.print(pushButtonReleasedCount%4, DEC);
   Serial.println();
 
-  rgb_led_write(pushButtonReleasedCount%4, encoderPos);
+  write_to_screen();
+  //rgb_led_write(pushButtonReleasedCount%4, encoderPos);
   
   delayMicroseconds(125000);
   loopCounter++;
