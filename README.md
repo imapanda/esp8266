@@ -74,6 +74,17 @@ You can learn how to use analog reading with the ESP8266 with the following guid
 [ESP8266 ADC – Read Analog Values with Arduino IDE, MicroPython and Lua](https://randomnerdtutorials.com/esp8266-adc-reading-analog-values-with-nodemcu/)
 
 
+## Sharing CPU time with the RF part
+
+One thing to keep in mind while writing programs for the ESP8266 is that your sketch has to share resources (CPU time and memory) with the Wi-Fi- and TCP-stacks (the software that runs in the background and handles all Wi-Fi and IP connections).
+If your code takes too long to execute, and don’t let the TCP stacks do their thing, it might crash, or you could lose data. It’s best to keep the execution time of you loop under a couple of hundreds of milliseconds.
+
+Every time the main loop is repeated, your sketch yields to the Wi-Fi and TCP to handle all Wi-Fi and TCP requests.
+
+If your loop takes longer than this, you will have to explicitly give CPU time to the Wi-Fi/TCP stacks, by using including delay(0); or yield();. If you don’t, network communication won’t work as expected, and if it’s longer than 3 seconds, the soft WDT (Watch Dog Timer) will reset the ESP. If the soft WDT is disabled, after a little over 8 seconds, the hardware WDT will reset the chip.
+
+From a microcontroller’s perspective however, 3 seconds is a very long time (240 million clockcycles), so unless you do some extremely heavy number crunching, or sending extremely long strings over Serial, you won’t be affected by this. Just keep in mind that you add the yield(); inside your for or while loops that could take longer than, say 100ms.
+
 ### On-board LED
 
 Most of the ESP8266 development boards have a built-in LED. This LED is usually connected to GPIO2.
