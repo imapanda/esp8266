@@ -31,6 +31,7 @@
 #include <Ticker.h>  //Ticker Library
 
 #define NUM_DIGIT 4
+#define NUM_DISPLAYS 2
 
 #define DISPLAY_CLOCK 1
 
@@ -52,7 +53,7 @@ const uint8_t GPIO_D4 = 4;   // => D2  on NodeMCU
 const uint8_t GPIO_D5 = 5;   // => D1  on NodeMCU
 const uint8_t GPIO_D6 = 15;  // => D8  on NodeMCU
 
-const uint8_t GPIO_CHIP_ENABLE_TEST = 16;
+const uint8_t GPIO_CHIP_ENABLE = 16;
 
 int SLEEPING_TIME = 1; // #seconds
 
@@ -70,7 +71,10 @@ unsigned int ss = 0;
 unsigned int ms = 0;
 unsigned int x = 0;
 const unsigned int displayPeriodMS = 500;
-char s[NUM_DIGIT + 1] = "0000";
+//char s[NUM_DIGIT + 1] = "0000";
+
+//TODO : how to dynamic print '0' NUM_DIGIT * NUM_DISPLAYS times into string ?
+char s[NUM_DIGIT * NUM_DISPLAYS + 1] = "00000000"; // 8 digits = 2 displays
 
 
 /*
@@ -82,7 +86,7 @@ const unsigned int displayPeriodMS_clock = 10;
 #define SECS_PER_MIN  (60UL)
 #define SECS_PER_HOUR (3600UL)
 #define SECS_PER_DAY  (SECS_PER_HOUR * 24L)
-#define MS_IN_SEC 200  // Normally 1000 but useful to fast-forward time for demo
+#define MS_IN_SEC 100  // Normally 1000 but useful to fast-forward time for demo
 // Useful Macros for getting elapsed time
 #define numberOfSeconds(_time_) (_time_ % SECS_PER_MIN)  
 #define numberOfMinutes(_time_) ((_time_ / SECS_PER_MIN) % SECS_PER_MIN) 
@@ -90,6 +94,7 @@ const unsigned int displayPeriodMS_clock = 10;
 #define elapsedDays(_time_) ( _time_ / SECS_PER_DAY)  
 
 void chip_enable() {
+  // Using only 1 pin to control 2 CE inputs on 2 DL1416 so we can't use it like that.
   //digitalWrite(GPIO_CHIP_ENABLE, HIGH); // sets the pin on
 }
 
@@ -160,9 +165,12 @@ void set_data(unsigned int x) {
 
 void update_time_ntp() {
   // TODO : update time through NTP request
-  digitalWrite(GPIO_CHIP_ENABLE_TEST, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
   delayMicroseconds(500000);
-  digitalWrite(GPIO_CHIP_ENABLE_TEST, LOW);
+
+  // For testing, invert CE gpio
+  //digitalWrite(GPIO_CHIP_ENABLE,!(digitalRead(GPIO_CHIP_ENABLE)));
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 void display_update() {
@@ -172,27 +180,47 @@ void display_update() {
 
   // We can now update display every 200 ms (if cur_epoch > local_epoch + 200)
   if(cur_epoch >= local_epoch + 200){
-    // sprintf(s, "%02d%02d", mm, ss); // print to string
-    sprintf(s, "%02d%02d", numberOfMinutes(cur_epoch/MS_IN_SEC), numberOfSeconds(cur_epoch/MS_IN_SEC));  // print to string
-    for (int digit = 0; digit < NUM_DIGIT; digit++) {
-      chip_disable();
-      delayMicroseconds(50);      // pauses for 50 microseconds
-      digit_select(digit);
-      delayMicroseconds(50);      // pauses for 50 microseconds
-      x = s[NUM_DIGIT - 1 - digit];
-  
-      set_data(x);
-      write_disable();
-      delayMicroseconds(50);      // pauses for 50 microseconds
-      write_enable();
-      digit_unselect();
-      chip_enable();
-  
-      delayMicroseconds(50);      // pauses for 50 microseconds
+    //sprintf(s, "%02d%02d", mm, ss); // print to string original
+    sprintf(s, "%02d%02d", numberOfMinutes(cur_epoch/MS_IN_SEC), numberOfSeconds(cur_epoch/MS_IN_SEC)); // print to string 2
+    sprintf(s, "%02d:%1d", numberOfMinutes(cur_epoch/MS_IN_SEC), numberOfSeconds(cur_epoch/MS_IN_SEC)); // test if it works
+    sprintf(s, "%02d/%02d.%02d", numberOfSeconds(cur_epoch/MS_IN_SEC), numberOfMinutes(cur_epoch/MS_IN_SEC), numberOfSeconds(cur_epoch/MS_IN_SEC));  // print to string with 2 displays
+    int display_number = 0;
+    for(display_number = 0; display_number < NUM_DISPLAYS; display_number++){
+      //Invert CE to write on the other chip
+      //digitalWrite(GPIO_CHIP_ENABLE,!(digitalRead(GPIO_CHIP_ENABLE)));
+      // TODO : not working.
+      if(display_number==0){digitalWrite(GPIO_CHIP_ENABLE,LOW);}
+      else{digitalWrite(GPIO_CHIP_ENABLE,HIGH);}
+      delayMicroseconds(200);
+      
+      for (int digit = 0; digit < NUM_DIGIT; digit++) {
+        chip_disable();
+        //delayMicroseconds(50);      // pauses for 50 microseconds
+        digit_select(digit);
+        delayMicroseconds(50);      // pauses for 50 microseconds
+
+        // NUM_DIGIT-1 : from 0 to 7
+        // Reading from right to left
+        
+        //x = s[NUM_DIGIT - 1 - digit];
+        x = s[NUM_DIGIT - 1 - digit - NUM_DIGIT*display_number];  
+    
+        set_data(x);
+        write_disable();
+        delayMicroseconds(50);      // pauses for 50 microseconds
+        write_enable();
+        digit_unselect();
+        chip_enable();
+    
+        //delayMicroseconds(50);      // pauses for 50 microseconds
+      }
     }
+    
 
     local_epoch = millis();
+
     
+    digitalWrite(GPIO_CHIP_ENABLE,HIGH);
   }
 
 }
@@ -306,7 +334,7 @@ void setup() {
 #endif
 
   // initialize GPIOs as outputs.
-  // pinMode(GPIO_CHIP_ENABLE, OUTPUT);
+  pinMode(GPIO_CHIP_ENABLE, OUTPUT);
   pinMode(GPIO_WRITE, OUTPUT);
   pinMode(GPIO_DIGIT_SELECT_A0, OUTPUT);
   pinMode(GPIO_DIGIT_SELECT_A1, OUTPUT);
@@ -320,7 +348,6 @@ void setup() {
   pinMode(GPIO_D5, OUTPUT);
   pinMode(GPIO_D6, OUTPUT);
 
-  pinMode(GPIO_CHIP_ENABLE_TEST, OUTPUT);
 
   chip_enable();
   write_disable();
