@@ -105,7 +105,43 @@ void displayDigit(int digit) {
 
 
 void display_time(){
+  switch(digit) {
+    case E_3:
+      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
+      digitalWrite(PIN_CC_DIGIT_1, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_1, LOW);
+      displayDigit(10);
+      digit=E_2;
+      break;
+    case E_2:
+      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
+      digitalWrite(PIN_CC_DIGIT_2, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_2, LOW);
+      displayDigit(10);
+      digit=E_1;
+      break;
+    case E_1:
+      displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
+      digitalWrite(PIN_CC_DIGIT_3, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_3, LOW);
+      displayDigit(10);
+      digit=E_0;
+      break;
+    case E_0:
+      displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
+      digitalWrite(PIN_CC_DIGIT_4, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_4, LOW);
+      displayDigit(10);
+      digit=E_3;
+      break;
+  }
   
+  
+  /*
   if (digit == E_3) {  // Enum thousands mode
     digitalWrite(PIN_CC_DIGIT_1, HIGH);
     displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
@@ -131,14 +167,48 @@ void display_time(){
     digitalWrite(PIN_CC_DIGIT_4, LOW);
     digit = E_3;
   }
-  
+  */
   local_epoch = millis();
   return;
 }
 
 
 void display_sync(){
-  
+  switch(digit) {
+    case E_3:
+      displayDigit(11);
+      digitalWrite(PIN_CC_DIGIT_1, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_1, LOW);
+      displayDigit(10);
+      digit = E_2;
+      break;
+    case E_2:
+      displayDigit(12);
+      digitalWrite(PIN_CC_DIGIT_2, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_2, LOW);
+      displayDigit(10);
+      digit = E_1;
+      break;
+    case E_1:
+      displayDigit(13);
+      digitalWrite(PIN_CC_DIGIT_3, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_3, LOW);
+      displayDigit(10);
+      digit = E_0;
+      break;
+    case E_0:
+      displayDigit(14);
+      digitalWrite(PIN_CC_DIGIT_4, HIGH);
+      delay(DELAY_MS);
+      digitalWrite(PIN_CC_DIGIT_4, LOW);
+      displayDigit(10);
+      digit = E_3;
+      break;
+  } 
+  /*
   if (digit == E_3) {  // Enum thousands mode
     digitalWrite(PIN_CC_DIGIT_1, HIGH);
     displayDigit(11);
@@ -164,6 +234,7 @@ void display_sync(){
     digitalWrite(PIN_CC_DIGIT_4, LOW);
     digit = E_3;
   }
+  */
 
   return;
 }
