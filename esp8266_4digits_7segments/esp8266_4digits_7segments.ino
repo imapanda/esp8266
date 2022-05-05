@@ -14,21 +14,21 @@
 // ----------------------------------------------------------------------
 const byte segCode[15][8] = {
   //  a  b  c  d  e  f  g  .
-  { 1, 1, 1, 1, 1, 1, 0, 0},  // 0
-  { 0, 1, 1, 0, 0, 0, 0, 0},  // 1
-  { 1, 1, 0, 1, 1, 0, 1, 0},  // 2
-  { 1, 1, 1, 1, 0, 0, 1, 0},  // 3
-  { 0, 1, 1, 0, 0, 1, 1, 0},  // 4
-  { 1, 0, 1, 1, 0, 1, 1, 0},  // 5
-  { 1, 0, 1, 1, 1, 1, 1, 0},  // 6
-  { 1, 1, 1, 0, 0, 0, 0, 0},  // 7
-  { 1, 1, 1, 1, 1, 1, 1, 0},  // 8
-  { 1, 1, 1, 1, 0, 1, 1, 0},  // 9
-  { 0, 0, 0, 0, 0, 0, 0, 1},  // .
-  { 0, 0, 0, 0, 0, 0, 0, 1},  // s
-  { 0, 0, 0, 0, 0, 0, 0, 1},  // y
-  { 0, 0, 1, 0, 0, 1, 0, 1},  // n
-  { 0, 0, 0, 0, 0, 0, 0, 1}   // c
+    { 1, 1, 1, 1, 1, 1, 0, 0},  // 0
+    { 0, 1, 1, 0, 0, 0, 0, 0},  // 1
+    { 1, 1, 0, 1, 1, 0, 1, 0},  // 2
+    { 1, 1, 1, 1, 0, 0, 1, 0},  // 3
+    { 0, 1, 1, 0, 0, 1, 1, 0},  // 4
+    { 1, 0, 1, 1, 0, 1, 1, 0},  // 5
+    { 1, 0, 1, 1, 1, 1, 1, 0},  // 6
+    { 1, 1, 1, 0, 0, 0, 0, 0},  // 7
+    { 1, 1, 1, 1, 1, 1, 1, 0},  // 8
+    { 1, 1, 1, 1, 0, 1, 1, 0},  // 9
+    { 0, 0, 0, 0, 0, 0, 0, 1},  // .
+    { 1, 0, 1, 1, 0, 1, 1, 0},  // s
+    { 0, 1, 1, 0, 0, 1, 1, 0},  // y
+    { 0, 0, 1, 0, 1, 0, 1, 0},  // n
+    { 1, 0, 0, 1, 1, 1, 0, 0}   // c
 };
 
 
@@ -55,7 +55,7 @@ eDigit digit = E_3;  // On rythm with the call change state
 // PIN_SEG_F = 3  => D9
 // PIN_SEG_G = 1  => D10
 // ----------------------------------------------------------------------
-const uint8_t SEGMENT_PINS[] = {2, 14, 12, 13, 15, 3, 1 };   // { a b c d e f g ). DOT is removed
+const uint8_t SEGMENT_PINS[] = {2, 14, 12, 13, 15, 3, 1 };   // { a b c d e f g ). --DOT is removed
 //const uint8_t PIN_SEG_DP = 0; // => Pulses with 3rd digit because esp8266 doesn't have enough pins
 
 
@@ -74,7 +74,7 @@ const uint8_t PIN_CC_DIGIT_4 = 16;  // => D0
 // ----------------------------------------------------------------------
 unsigned long local_epoch = 0;
 const unsigned int displayPeriodMS_clock = 10;
-#define DELAY_MS 50
+#define DELAY_MS 2
 
 // ----------------------------------------------------------------------
 // Useful Constants
@@ -82,7 +82,7 @@ const unsigned int displayPeriodMS_clock = 10;
 #define SECS_PER_MIN  (60UL)
 #define SECS_PER_HOUR (3600UL)
 #define SECS_PER_DAY  (SECS_PER_HOUR * 24L)
-#define MS_IN_SEC 100  // Normally 1000 but useful to fast-forward time for demo
+#define MS_IN_SEC 1000 // Change here for fast forward
 
 
 // ----------------------------------------------------------------------
@@ -107,29 +107,64 @@ void displayDigit(int digit) {
 void display_time(){
   
   if (digit == E_3) {  // Enum thousands mode
-    digitalWrite(PIN_CC_DIGIT_1, LOW);
-    //displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
-    displayDigit(14);
+    digitalWrite(PIN_CC_DIGIT_1, HIGH);
+    displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
+    delay(DELAY_MS);
     digitalWrite(PIN_CC_DIGIT_1, LOW);
     digit = E_2;
   } else if (digit == E_2) {  // Enum hundreds mode
     digitalWrite(PIN_CC_DIGIT_2, HIGH);
     displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
+    delay(DELAY_MS);
     digitalWrite(PIN_CC_DIGIT_2, LOW);
     digit = E_1;
   } else if (digit == E_1) {  // Enum tens mode
     digitalWrite(PIN_CC_DIGIT_3, HIGH);
     displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
+    delay(DELAY_MS);
     digitalWrite(PIN_CC_DIGIT_3, LOW);
     digit = E_0;
   } else {  // Enum units mode digit == E_0
     digitalWrite(PIN_CC_DIGIT_4, HIGH);
     displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
+    delay(DELAY_MS);
     digitalWrite(PIN_CC_DIGIT_4, LOW);
     digit = E_3;
   }
   
   local_epoch = millis();
+  return;
+}
+
+
+void display_sync(){
+  
+  if (digit == E_3) {  // Enum thousands mode
+    digitalWrite(PIN_CC_DIGIT_1, HIGH);
+    displayDigit(11);
+    delay(DELAY_MS);
+    digitalWrite(PIN_CC_DIGIT_1, LOW);
+    digit = E_2;
+  } else if (digit == E_2) {  // Enum hundreds mode
+    digitalWrite(PIN_CC_DIGIT_2, HIGH);
+    displayDigit(12);
+    delay(DELAY_MS);
+    digitalWrite(PIN_CC_DIGIT_2, LOW);
+    digit = E_1;
+  } else if (digit == E_1) {  // Enum tens mode
+    digitalWrite(PIN_CC_DIGIT_3, HIGH);
+    displayDigit(13);
+    delay(DELAY_MS);
+    digitalWrite(PIN_CC_DIGIT_3, LOW);
+    digit = E_0;
+  } else {  // Enum units mode digit == E_0
+    digitalWrite(PIN_CC_DIGIT_4, HIGH);
+    displayDigit(14);
+    delay(DELAY_MS);
+    digitalWrite(PIN_CC_DIGIT_4, LOW);
+    digit = E_3;
+  }
+
   return;
 }
 
@@ -146,27 +181,18 @@ void setup() {
   for (i = 0; i < 7; i++) {
     pinMode(SEGMENT_PINS[i], OUTPUT);
   }
+
+  // Calculate in seconds time you want to display :
+  unsigned int loop_count = 100/DELAY_MS;
+  for (i = 0; i < loop_count; i++) {
+    display_sync();
+    display_sync();
+    display_sync();
+    display_sync();
+  }
 }
 
 // the loop function runs over and over again forever
 void loop() {
-
-
   display_time();
-  /*digitalWrite(PIN_CC_DIGIT_1, HIGH);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_1, LOW);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_2, HIGH);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_2, LOW);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_3, HIGH);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_3, LOW);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_4, HIGH);
-  delay(400);
-  digitalWrite(PIN_CC_DIGIT_4, LOW);
-  delay(400);*/
 }
