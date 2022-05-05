@@ -262,5 +262,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+
+  // TODO : move this next line into an interrupt
   display_time();
 }
