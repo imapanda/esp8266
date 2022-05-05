@@ -248,17 +248,14 @@ void setup() {
   pinMode(PIN_CC_DIGIT_4, OUTPUT);
 
   // initialize digital pins as outputs.
-  uint8_t i;
+  unsigned int i;
   for (i = 0; i < 7; i++) {
     pinMode(SEGMENT_PINS[i], OUTPUT);
   }
 
   // Calculate in seconds time you want to display :
-  unsigned int loop_count = 100/DELAY_MS;
+  unsigned int loop_count = 2000/DELAY_MS;
   for (i = 0; i < loop_count; i++) {
-    display_sync();
-    display_sync();
-    display_sync();
     display_sync();
   }
 }
