@@ -10,6 +10,11 @@
  */
 
 // ----------------------------------------------------------------------
+// Libraries includes
+// ----------------------------------------------------------------------
+#include <Ticker.h>
+
+// ----------------------------------------------------------------------
 // Easy define on/off gpios for each letter
 // ----------------------------------------------------------------------
 const byte segCode[15][8] = {
@@ -92,6 +97,18 @@ const unsigned int displayPeriodMS_clock = 10;
 #define numberOfMinutes(_time_) ((_time_ / SECS_PER_MIN) % SECS_PER_MIN) 
 #define numberOfHours(_time_) (( _time_% SECS_PER_DAY) / SECS_PER_HOUR)
 #define elapsedDays(_time_) ( _time_ / SECS_PER_DAY)  
+
+
+// ----------------------------------------------------------------------
+// hardware timer based on :
+// ----------------------------------------------------------------------
+
+// Push button debounce stuff
+Ticker clock_ticker;
+
+// ----------------------------------------------------------------------
+// BEGINING OF CODE
+// ----------------------------------------------------------------------
 
 
 void displayDigit(int digit) {
@@ -252,17 +269,25 @@ void setup() {
   for (i = 0; i < 7; i++) {
     pinMode(SEGMENT_PINS[i], OUTPUT);
   }
+  
+  
 
   // Calculate in seconds time you want to display :
   unsigned int loop_count = 2000/DELAY_MS;
   for (i = 0; i < loop_count; i++) {
     display_sync();
   }
+
+
+  // TODO : Board crashes
+  clock_ticker.attach_ms(100., display_time);
 }
 
 // the loop function runs over and over again forever
 void loop() {
-
+  // Bark to watchdog
+  ESP.wdtFeed();
   // TODO : move this next line into an interrupt
-  display_time();
+  // display_time();
+  delay(1);
 }
