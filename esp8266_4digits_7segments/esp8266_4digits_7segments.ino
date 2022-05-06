@@ -14,6 +14,19 @@
 // Libraries includes
 // ----------------------------------------------------------------------
 #include <Ticker.h>
+#include <NTP.h>  //https://github.com/sstaub/NTP
+#include <WiFiUdp.h>
+#include <ESP8266WiFi.h>
+
+
+// ----------------------------------------------------------------------
+// set Wi-Fi SSID and password + NTP settings
+// ----------------------------------------------------------------------
+const char *ssid     = "RANTANPLAN";
+const char *password = "F5QiRNX1rCf9iqNaYg";
+WiFiUDP wifiUdp;
+NTP ntp(wifiUdp);
+
 
 // ----------------------------------------------------------------------
 // Easy define on/off gpios for each letter
@@ -136,24 +149,27 @@ void display_time(){
   digitalWrite(PIN_CC_DIGIT_2, LOW);
   digitalWrite(PIN_CC_DIGIT_3, LOW);
   digitalWrite(PIN_CC_DIGIT_4, LOW);
+  // To use hours :
+  // numberOfHours  (ntp.epoch())/10
+  
   switch(digit) {
     case E_3:
-      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);  // ON GPIOs for selected number
+      displayDigit(numberOfMinutes(ntp.epoch())/10);  // ON GPIOs for selected number
       digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
       digit=E_2;  // Switch to next digit
       break;
     case E_2:
-      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
+      displayDigit(numberOfMinutes(ntp.epoch())%10);
       digitalWrite(PIN_CC_DIGIT_2, HIGH);
       digit=E_1;
       break;
     case E_1:
-      displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
+      displayDigit(numberOfSeconds(ntp.epoch())/10);
       digitalWrite(PIN_CC_DIGIT_3, HIGH);
       digit=E_0;
       break;
     case E_0:
-      displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
+      displayDigit(numberOfSeconds(ntp.epoch())%10);
       digitalWrite(PIN_CC_DIGIT_4, HIGH);
       digit=E_3;
       break;
@@ -205,7 +221,25 @@ void display_sync(){
 
 
 void setup() {
+  
+  pinMode(LED_BUILTIN, OUTPUT);
+  WiFi.begin(ssid, password);
+  // Serial.print("Connecting.");
+  while ( WiFi.status() != WL_CONNECTED ) {
+    // Serial.print(".");
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(250);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(250);
+  }
 
+  // Setting up NTP parameters :
+  ntp.ruleDST("CEST", Last, Sun, Mar, 2, 120); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
+  ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
+  //updateInterval(uint32_t interval);
+  ntp.updateInterval(5000); // 5 seconds
+  ntp.begin();
+  
   // initialize GPIO as outputs.
   pinMode(PIN_CC_DIGIT_1, OUTPUT);
   pinMode(PIN_CC_DIGIT_2, OUTPUT);
@@ -225,9 +259,12 @@ void setup() {
   }
 
   segment_ticker.attach_ms(DELAY_MS,display_time);
-  
+  digitalWrite(LED_BUILTIN, LOW);
   return;
 }
 
 // the loop function runs over and over again forever
-void loop() {}
+void loop() {
+  ntp.update();
+  delay(1000);
+}
