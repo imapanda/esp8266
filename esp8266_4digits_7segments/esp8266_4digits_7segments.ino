@@ -257,7 +257,7 @@ void display_sync(){
 }
 
 void setup() {
-  
+
   // initialize GPIO as outputs.
   pinMode(PIN_CC_DIGIT_1, OUTPUT);
   pinMode(PIN_CC_DIGIT_2, OUTPUT);
@@ -279,8 +279,11 @@ void setup() {
   }
 
 
-  // TODO : Board crashes
-  clock_ticker.attach_ms(100., display_time);
+  // TODO : not work
+  clock_ticker.attach(2 / 1000., display_time);
+  
+  //clock_ticker.attach(100 / 1000., display_time); // debounce period in [ms]
+  //clock_ticker.attach_ms(4 , display_time); // debounce period in [ms]
 }
 
 // the loop function runs over and over again forever
@@ -289,5 +292,5 @@ void loop() {
   ESP.wdtFeed();
   // TODO : move this next line into an interrupt
   // display_time();
-  delay(1);
+  delayMicroseconds(125000);
 }
