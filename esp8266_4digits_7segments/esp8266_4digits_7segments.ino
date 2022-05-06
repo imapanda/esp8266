@@ -1,10 +1,11 @@
 /*
- * 2022.04.22 - C.BRESSY
+ * 2022.04.22 - C.BRESSY & P.BRESSY
+ * 
  * 
  * Running 4 digits common cathode 7 segments display.
  * Objective here is to run a NTP sync every X minutes to sync our time with NTP.
  * 
- * Used 4 digits display in current ocnfiguration : kw4-802CGB (common cathode)
+ * Used 4 digits display in current configuration : kw4-802CGB (common cathode)
  * https://github.com/imapanda/7-segments-datasheets/blob/main/kw4-802CGB%2Bkw4-802AGB.pdf
  * 
  */
@@ -16,9 +17,18 @@
 
 // ----------------------------------------------------------------------
 // Easy define on/off gpios for each letter
+//        A
+//       ---
+//    F |   | B
+//      | G |
+//       ---
+//    E |   | C
+//      |   |
+//       ---  .
+//        D   dp
 // ----------------------------------------------------------------------
 const byte segCode[15][8] = {
-  //  a  b  c  d  e  f  g  .
+  //  a  b  c  d  e  f  g  dp
     { 1, 1, 1, 1, 1, 1, 0, 0},  // 0
     { 0, 1, 1, 0, 0, 0, 0, 0},  // 1
     { 1, 1, 0, 1, 1, 0, 1, 0},  // 2
@@ -33,7 +43,7 @@ const byte segCode[15][8] = {
     { 1, 0, 1, 1, 0, 1, 1, 0},  // s
     { 0, 1, 1, 0, 0, 1, 1, 0},  // y
     { 0, 0, 1, 0, 1, 0, 1, 0},  // n
-    { 1, 0, 0, 1, 1, 1, 0, 0}   // c
+    { 1, 0, 0, 1, 1, 1, 0, 0},  // c
 };
 
 
@@ -47,11 +57,12 @@ typedef enum {
   E_0
 } eDigit;
 
-eDigit digit = E_3;  // On rythm with the call change state
+eDigit digit = E_3;  // On rythm with every call, we change state
 
 
 // ----------------------------------------------------------------------
 // Define segments GPIOs
+//
 // PIN_SEG_A = 2  => D4
 // PIN_SEG_B = 14 => D5
 // PIN_SEG_C = 12 => D6
@@ -100,11 +111,10 @@ const unsigned int displayPeriodMS_clock = 10;
 
 
 // ----------------------------------------------------------------------
-// hardware timer based on :
+// Hardware timer
 // ----------------------------------------------------------------------
+Ticker segment_ticker;
 
-// Push button debounce stuff
-Ticker clock_ticker;
 
 // ----------------------------------------------------------------------
 // BEGINING OF CODE
@@ -124,67 +134,51 @@ void displayDigit(int digit) {
 void display_time(){
   switch(digit) {
     case E_3:
+      digitalWrite(PIN_CC_DIGIT_2, LOW);
+      digitalWrite(PIN_CC_DIGIT_3, LOW);
+      digitalWrite(PIN_CC_DIGIT_4, LOW);
       displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
       digitalWrite(PIN_CC_DIGIT_1, HIGH);
-      delay(DELAY_MS);
-      digitalWrite(PIN_CC_DIGIT_1, LOW);
-      displayDigit(10);
+//      delay(DELAY_MS);
+//      digitalWrite(PIN_CC_DIGIT_1, LOW);
+//      displayDigit(10); //Erase
       digit=E_2;
       break;
     case E_2:
+      digitalWrite(PIN_CC_DIGIT_3, LOW);
+      digitalWrite(PIN_CC_DIGIT_4, LOW);
+      digitalWrite(PIN_CC_DIGIT_1, LOW);
       displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
       digitalWrite(PIN_CC_DIGIT_2, HIGH);
-      delay(DELAY_MS);
-      digitalWrite(PIN_CC_DIGIT_2, LOW);
-      displayDigit(10);
+//      delay(DELAY_MS);
+//      digitalWrite(PIN_CC_DIGIT_2, LOW);
+//      displayDigit(10);
       digit=E_1;
       break;
     case E_1:
+      digitalWrite(PIN_CC_DIGIT_4, LOW);
+      digitalWrite(PIN_CC_DIGIT_1, LOW);
+      digitalWrite(PIN_CC_DIGIT_2, LOW);
       displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
       digitalWrite(PIN_CC_DIGIT_3, HIGH);
-      delay(DELAY_MS);
-      digitalWrite(PIN_CC_DIGIT_3, LOW);
-      displayDigit(10);
+//      delay(DELAY_MS);
+//      digitalWrite(PIN_CC_DIGIT_3, LOW);
+//      displayDigit(10);
       digit=E_0;
       break;
     case E_0:
+      digitalWrite(PIN_CC_DIGIT_1, LOW);
+      digitalWrite(PIN_CC_DIGIT_2, LOW);
+      digitalWrite(PIN_CC_DIGIT_3, LOW);
       displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
       digitalWrite(PIN_CC_DIGIT_4, HIGH);
-      delay(DELAY_MS);
-      digitalWrite(PIN_CC_DIGIT_4, LOW);
-      displayDigit(10);
+//      delay(DELAY_MS);
+//      digitalWrite(PIN_CC_DIGIT_4, LOW);
+//      displayDigit(10);
       digit=E_3;
       break;
   }
   
-  
-  /*
-  if (digit == E_3) {  // Enum thousands mode
-    digitalWrite(PIN_CC_DIGIT_1, HIGH);
-    displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_1, LOW);
-    digit = E_2;
-  } else if (digit == E_2) {  // Enum hundreds mode
-    digitalWrite(PIN_CC_DIGIT_2, HIGH);
-    displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_2, LOW);
-    digit = E_1;
-  } else if (digit == E_1) {  // Enum tens mode
-    digitalWrite(PIN_CC_DIGIT_3, HIGH);
-    displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_3, LOW);
-    digit = E_0;
-  } else {  // Enum units mode digit == E_0
-    digitalWrite(PIN_CC_DIGIT_4, HIGH);
-    displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_4, LOW);
-    digit = E_3;
-  }
-  */
   local_epoch = millis();
   return;
 }
@@ -225,36 +219,10 @@ void display_sync(){
       digit = E_3;
       break;
   } 
-  /*
-  if (digit == E_3) {  // Enum thousands mode
-    digitalWrite(PIN_CC_DIGIT_1, HIGH);
-    displayDigit(11);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_1, LOW);
-    digit = E_2;
-  } else if (digit == E_2) {  // Enum hundreds mode
-    digitalWrite(PIN_CC_DIGIT_2, HIGH);
-    displayDigit(12);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_2, LOW);
-    digit = E_1;
-  } else if (digit == E_1) {  // Enum tens mode
-    digitalWrite(PIN_CC_DIGIT_3, HIGH);
-    displayDigit(13);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_3, LOW);
-    digit = E_0;
-  } else {  // Enum units mode digit == E_0
-    digitalWrite(PIN_CC_DIGIT_4, HIGH);
-    displayDigit(14);
-    delay(DELAY_MS);
-    digitalWrite(PIN_CC_DIGIT_4, LOW);
-    digit = E_3;
-  }
-  */
 
   return;
 }
+
 
 void setup() {
 
@@ -270,27 +238,15 @@ void setup() {
     pinMode(SEGMENT_PINS[i], OUTPUT);
   }
   
-  
-
-  // Calculate in seconds time you want to display :
+  // Calculate in seconds time you want to display (2000 = 2seconds):
   unsigned int loop_count = 2000/DELAY_MS;
   for (i = 0; i < loop_count; i++) {
     display_sync();
   }
 
+  segment_ticker.attach_ms(DELAY_MS,display_time);
 
-  // TODO : not work
-  clock_ticker.attach(2 / 1000., display_time);
-  
-  //clock_ticker.attach(100 / 1000., display_time); // debounce period in [ms]
-  //clock_ticker.attach_ms(4 , display_time); // debounce period in [ms]
 }
 
 // the loop function runs over and over again forever
-void loop() {
-  // Bark to watchdog
-  ESP.wdtFeed();
-  // TODO : move this next line into an interrupt
-  // display_time();
-  delayMicroseconds(125000);
-}
+void loop() {}
