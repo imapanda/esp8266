@@ -132,54 +132,34 @@ void displayDigit(int digit) {
 
 
 void display_time(){
+  digitalWrite(PIN_CC_DIGIT_1, LOW);
+  digitalWrite(PIN_CC_DIGIT_2, LOW);
+  digitalWrite(PIN_CC_DIGIT_3, LOW);
+  digitalWrite(PIN_CC_DIGIT_4, LOW);
   switch(digit) {
     case E_3:
-      digitalWrite(PIN_CC_DIGIT_2, LOW);
-      digitalWrite(PIN_CC_DIGIT_3, LOW);
-      digitalWrite(PIN_CC_DIGIT_4, LOW);
-      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);
-      digitalWrite(PIN_CC_DIGIT_1, HIGH);
-//      delay(DELAY_MS);
-//      digitalWrite(PIN_CC_DIGIT_1, LOW);
-//      displayDigit(10); //Erase
-      digit=E_2;
+      displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)/10);  // ON GPIOs for selected number
+      digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
+      digit=E_2;  // Switch to next digit
       break;
     case E_2:
-      digitalWrite(PIN_CC_DIGIT_3, LOW);
-      digitalWrite(PIN_CC_DIGIT_4, LOW);
-      digitalWrite(PIN_CC_DIGIT_1, LOW);
       displayDigit(numberOfMinutes(local_epoch/MS_IN_SEC)%10);
       digitalWrite(PIN_CC_DIGIT_2, HIGH);
-//      delay(DELAY_MS);
-//      digitalWrite(PIN_CC_DIGIT_2, LOW);
-//      displayDigit(10);
       digit=E_1;
       break;
     case E_1:
-      digitalWrite(PIN_CC_DIGIT_4, LOW);
-      digitalWrite(PIN_CC_DIGIT_1, LOW);
-      digitalWrite(PIN_CC_DIGIT_2, LOW);
       displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)/10);
       digitalWrite(PIN_CC_DIGIT_3, HIGH);
-//      delay(DELAY_MS);
-//      digitalWrite(PIN_CC_DIGIT_3, LOW);
-//      displayDigit(10);
       digit=E_0;
       break;
     case E_0:
-      digitalWrite(PIN_CC_DIGIT_1, LOW);
-      digitalWrite(PIN_CC_DIGIT_2, LOW);
-      digitalWrite(PIN_CC_DIGIT_3, LOW);
       displayDigit(numberOfSeconds(local_epoch/MS_IN_SEC)%10);
       digitalWrite(PIN_CC_DIGIT_4, HIGH);
-//      delay(DELAY_MS);
-//      digitalWrite(PIN_CC_DIGIT_4, LOW);
-//      displayDigit(10);
       digit=E_3;
       break;
   }
   
-  local_epoch = millis();
+  local_epoch = millis();  // Update time
   return;
 }
 
@@ -245,7 +225,8 @@ void setup() {
   }
 
   segment_ticker.attach_ms(DELAY_MS,display_time);
-
+  
+  return;
 }
 
 // the loop function runs over and over again forever
