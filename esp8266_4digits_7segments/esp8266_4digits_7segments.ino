@@ -109,7 +109,6 @@ const uint8_t PIN_CC_DIGIT_4 = 16;  // => D0
 // Time variables
 // ----------------------------------------------------------------------
 unsigned long local_epoch = 0;
-const unsigned int displayPeriodMS_clock = 10;
 #define DELAY_MS 2
 
 // ----------------------------------------------------------------------
@@ -118,7 +117,7 @@ const unsigned int displayPeriodMS_clock = 10;
 #define SECS_PER_MIN  (60UL)
 #define SECS_PER_HOUR (3600UL)
 #define SECS_PER_DAY  (SECS_PER_HOUR * 24L)
-#define MS_IN_SEC 1000 // Change here for fast forward
+#define MS_IN_SEC 1000
 
 
 // ----------------------------------------------------------------------
@@ -156,8 +155,10 @@ void display_time(){
   digitalWrite(PIN_CC_DIGIT_2, LOW);
   digitalWrite(PIN_CC_DIGIT_3, LOW);
   digitalWrite(PIN_CC_DIGIT_4, LOW);
+
+  
   // To use hours :
-  // numberOfHours  (ntp.epoch())/10
+  // numberOfHours(ntp.epoch())/10
   
   switch(digit) {
     case E_3:
@@ -247,8 +248,11 @@ void setup() {
   // Setting up NTP parameters :
   ntp.ruleDST("CEST", Last, Sun, Mar, 2, 120); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
   ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
+  
   //updateInterval(uint32_t interval);
   ntp.updateInterval(5000); // 5 seconds
+
+  // Start ntp client
   ntp.begin();
   
   // initialize GPIO as outputs.
@@ -276,5 +280,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+
+  // Call to update for ntp mandatory
   ntp.update();
 }
