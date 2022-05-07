@@ -8,6 +8,12 @@
  * Used 4 digits display in current configuration : kw4-802CGB (common cathode)
  * https://github.com/imapanda/7-segments-datasheets/blob/main/kw4-802CGB%2Bkw4-802AGB.pdf
  * 
+ * TODOS :
+ * - blink every second
+ * - display hh.hh
+ * - display "BOOT" during boot
+ * - display "WIFI" during wifi connection and "OK" when it's done.
+ * 
  */
 
 // ----------------------------------------------------------------------
