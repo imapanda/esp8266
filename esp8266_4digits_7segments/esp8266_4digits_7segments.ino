@@ -32,6 +32,7 @@ const char *ssid     = "RANTANPLAN";
 const char *password = "F5QiRNX1rCf9iqNaYg";
 WiFiUDP wifiUdp;
 NTP ntp(wifiUdp);
+const char *newHostname = "ESP8266Node_NTPClient";  // may not work
 
 
 // ----------------------------------------------------------------------
@@ -229,7 +230,11 @@ void display_sync(){
 void setup() {
   
   pinMode(LED_BUILTIN, OUTPUT);
+  //Set hostname
+  WiFi.hostname(newHostname);
+  
   WiFi.begin(ssid, password);
+  
   // Serial.print("Connecting.");
   while ( WiFi.status() != WL_CONNECTED ) {
     // Serial.print(".");
