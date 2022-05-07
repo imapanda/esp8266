@@ -281,6 +281,6 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
 
-  // Call to update for ntp mandatory
+  // Call to update for ntp within loop is mandatory
   ntp.update();
 }
