@@ -8,9 +8,11 @@
  * Used 4 digits display in current configuration : kw4-802CGB (common cathode)
  * https://github.com/imapanda/7-segments-datasheets/blob/main/kw4-802CGB%2Bkw4-802AGB.pdf
  * 
+ * 
+ * DISPLAY_DEMO set to 1 is for "mmss" time display, else you get "hhmm" display
  * TODOS :
  * - blink every second
- * - display hh.hh
+ * - correct hour offset (-2 displayed compared to real time)
  * - display "BOOT" during boot
  * - display "WIFI" during wifi connection and "OK" when it's done.
  * 
@@ -110,6 +112,7 @@ const uint8_t PIN_CC_DIGIT_4 = 16;  // => D0
 // ----------------------------------------------------------------------
 unsigned long local_epoch = 0;
 #define DELAY_MS 2
+#define DISPLAY_DEMO 0  // 1 will display demo mode "MMSS", else "HHMM" 
 
 // ----------------------------------------------------------------------
 // Useful Constants
@@ -159,29 +162,54 @@ void display_time(){
   
   // To use hours :
   // numberOfHours(ntp.epoch())/10
-  
-  switch(digit) {
-    case E_3:
-      displayDigit(numberOfMinutes(ntp.epoch())/10);  // ON GPIOs for selected number
-      digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
-      digit=E_2;  // Switch to next digit
-      break;
-    case E_2:
-      displayDigit(numberOfMinutes(ntp.epoch())%10);
-      digitalWrite(PIN_CC_DIGIT_2, HIGH);
-      digit=E_1;
-      break;
-    case E_1:
-      displayDigit(numberOfSeconds(ntp.epoch())/10);
-      digitalWrite(PIN_CC_DIGIT_3, HIGH);
-      digit=E_0;
-      break;
-    case E_0:
-      displayDigit(numberOfSeconds(ntp.epoch())%10);
-      digitalWrite(PIN_CC_DIGIT_4, HIGH);
-      digit=E_3;
-      break;
-  }
+  #if DISPLAY_DEMO
+      switch(digit) {
+        case E_3:
+          displayDigit(numberOfMinutes(ntp.epoch())/10);  // ON GPIOs for selected number
+          digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
+          digit=E_2;  // Switch to next digit
+          break;
+        case E_2:
+          displayDigit(numberOfMinutes(ntp.epoch())%10);
+          digitalWrite(PIN_CC_DIGIT_2, HIGH);
+          digit=E_1;
+          break;
+        case E_1:
+          displayDigit(numberOfSeconds(ntp.epoch())/10);
+          digitalWrite(PIN_CC_DIGIT_3, HIGH);
+          digit=E_0;
+          break;
+        case E_0:
+          displayDigit(numberOfSeconds(ntp.epoch())%10);
+          digitalWrite(PIN_CC_DIGIT_4, HIGH);
+          digit=E_3;
+          break;
+      }
+  #else
+    switch(digit) {
+      case E_3:
+        displayDigit(numberOfHours(ntp.epoch())/10);  // ON GPIOs for selected number
+        digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
+        digit=E_2;  // Switch to next digit
+        break;
+      case E_2:
+        displayDigit(numberOfHours(ntp.epoch())%10);
+        digitalWrite(PIN_CC_DIGIT_2, HIGH);
+        digit=E_1;
+        break;
+      case E_1:
+        displayDigit(numberOfMinutes(ntp.epoch())/10);
+        digitalWrite(PIN_CC_DIGIT_3, HIGH);
+        digit=E_0;
+        break;
+      case E_0:
+        displayDigit(numberOfMinutes(ntp.epoch())%10);
+        digitalWrite(PIN_CC_DIGIT_4, HIGH);
+        digit=E_3;
+        break;
+    }
+  #endif
+
   
   local_epoch = millis();  // Update time
   return;
