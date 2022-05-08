@@ -22,7 +22,7 @@
 // Libraries includes
 // ----------------------------------------------------------------------
 #include <Ticker.h>
-#include <NTP.h>  //https://github.com/sstaub/NTP
+#include <NTP.h>  // https://github.com/sstaub/NTP
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 
@@ -165,22 +165,22 @@ void display_time(){
   #if DISPLAY_DEMO
       switch(digit) {
         case E_3:
-          displayDigit(numberOfMinutes(ntp.epoch())/10);  // ON GPIOs for selected number
+          displayDigit(ntp.minutes()/10);  // ON GPIOs for selected number
           digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
           digit=E_2;  // Switch to next digit
           break;
         case E_2:
-          displayDigit(numberOfMinutes(ntp.epoch())%10);
+          displayDigit(ntp.minutes()%10);
           digitalWrite(PIN_CC_DIGIT_2, HIGH);
           digit=E_1;
           break;
         case E_1:
-          displayDigit(numberOfSeconds(ntp.epoch())/10);
+          displayDigit(ntp.seconds()/10);
           digitalWrite(PIN_CC_DIGIT_3, HIGH);
           digit=E_0;
           break;
         case E_0:
-          displayDigit(numberOfSeconds(ntp.epoch())%10);
+          displayDigit(ntp.seconds()%10);
           digitalWrite(PIN_CC_DIGIT_4, HIGH);
           digit=E_3;
           break;
@@ -188,22 +188,22 @@ void display_time(){
   #else
     switch(digit) {
       case E_3:
-        displayDigit(numberOfHours(ntp.epoch())/10);  // ON GPIOs for selected number
+        displayDigit(ntp.hours()/10);  // ON GPIOs for selected number
         digitalWrite(PIN_CC_DIGIT_1, HIGH);  // Cathode to GND
         digit=E_2;  // Switch to next digit
         break;
       case E_2:
-        displayDigit(numberOfHours(ntp.epoch())%10);
+        displayDigit(ntp.hours()%10);
         digitalWrite(PIN_CC_DIGIT_2, HIGH);
         digit=E_1;
         break;
       case E_1:
-        displayDigit(numberOfMinutes(ntp.epoch())/10);
+        displayDigit(ntp.minutes()/10);
         digitalWrite(PIN_CC_DIGIT_3, HIGH);
         digit=E_0;
         break;
       case E_0:
-        displayDigit(numberOfMinutes(ntp.epoch())%10);
+        displayDigit(ntp.minutes()%10);
         digitalWrite(PIN_CC_DIGIT_4, HIGH);
         digit=E_3;
         break;

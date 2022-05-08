@@ -134,12 +134,12 @@ void loop() {
   
   Serial.print(" - ");
 
-  Serial.print(numberOfHours  (ntp.epoch())/10);
-  Serial.print(numberOfHours  (ntp.epoch())/10);
-  Serial.print(numberOfMinutes(ntp.epoch())/10);
-  Serial.print(numberOfMinutes(ntp.epoch())%10);
-  Serial.print(numberOfSeconds(ntp.epoch())/10);
-  Serial.print(numberOfSeconds(ntp.epoch())%10);
+  Serial.print(ntp.hours()/10);
+  Serial.print(ntp.hours()%10);
+  Serial.print(ntp.minutes()/10);
+  Serial.print(ntp.minutes()%10);
+  Serial.print(ntp.seconds()/10);
+  Serial.print(ntp.seconds()%10);
 
   Serial.print(" - ");
 
