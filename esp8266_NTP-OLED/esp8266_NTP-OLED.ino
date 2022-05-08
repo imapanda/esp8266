@@ -9,7 +9,7 @@
 // Status led (Green/Orange) pins
 // ----------------------------------------------------------------------
 const uint8_t PIN_COLOR_1 = 0;   // => D3 green
-const uint8_t PIN_COLOR_2 = 4;   // => D2
+const uint8_t PIN_COLOR_2 = 2;   // => D4 orange
 
 
 // ----------------------------------------------------------------------
@@ -150,7 +150,7 @@ void setup() {
   ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
 
   //updateInterval(uint32_t interval);
-  ntp.updateInterval(5000);
+  ntp.updateInterval(2000);
   
   ntp.begin();
   Serial.println("start NTP");
@@ -167,7 +167,7 @@ void setup() {
 
 void loop() {
   ESP.wdtFeed();
-  ntp.update();
+  bool res = ntp.update();
   Serial.print("LOOP - epoch() : ");
   Serial.print(ntp.epoch());
   
@@ -186,7 +186,11 @@ void loop() {
 
   Serial.print(" - ");
 
-  Serial.println(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
+  Serial.print(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
+
+  Serial.print(" - res : ");
+  Serial.println(res);
+
   
-  delay(500);
+  delay(5000);  // wait 5 seconds
 }
