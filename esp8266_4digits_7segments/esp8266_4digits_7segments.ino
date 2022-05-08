@@ -12,7 +12,7 @@
  * DISPLAY_DEMO set to 1 is for "mmss" time display, else you get "hhmm" display
  * TODOS :
  * - blink every second
- * - correct hour offset (-2 displayed compared to real time)
+ * - handle ntp.update() returning false (timeout)
  * - display "BOOT" during boot
  * - display "WIFI" during wifi connection and "OK" when it's done.
  * 
