@@ -82,25 +82,49 @@ void display_time(){
   return;
 }
 void update_ntp(){
-  // add millis diff to local epoch
+//  // add millis diff to local epoch
+//
+//  // Warning, delay() inside tickers does not work because because
+//  // Ticker functions are using the underlying timer
+//  Serial.println("update_ntp start");
+//  Serial.print("local_epoch : ");
+//  Serial.println(local_epoch);
+//  digitalWrite(PIN_COLOR_1, LOW);
+//  digitalWrite(PIN_COLOR_2, HIGH);
+//
+////  // Update NTP here.
+////  ntp.update();
+//
+//  Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
+//  Serial.println(ntp.formattedTime("%A %T")); // Www hh:mm:ss
+//  
+//  digitalWrite(PIN_COLOR_2, LOW);
+//  digitalWrite(PIN_COLOR_1, HIGH);
+//  Serial.println("update_ntp done");
+}
 
-  // Warning, delay() inside tickers does not work because because
-  // Ticker functions are using the underlying timer
-  Serial.println("update_ntp start");
-  Serial.print("local_epoch : ");
-  Serial.println(local_epoch);
-  digitalWrite(PIN_COLOR_1, LOW);
-  digitalWrite(PIN_COLOR_2, HIGH);
 
-//  // Update NTP here.
-//  ntp.update();
-
-  Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
-  Serial.println(ntp.formattedTime("%A %T")); // Www hh:mm:ss
+uint8_t display_oled(uint8_t row, uint16_t col, char* text){
+  // Column O to 3
+  if(col > 3){return -1;}
   
-  digitalWrite(PIN_COLOR_2, LOW);
-  digitalWrite(PIN_COLOR_1, HIGH);
-  Serial.println("update_ntp done");
+  //ecranOLED.clearDisplay(); // clear buffer
+  //ecranOLED.display();
+
+  // erase
+  ecranOLED.setCursor(row, col);
+  //ecranOLED.print("                ");
+
+  ecranOLED.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+  //display.println(3.141592);
+
+
+  ecranOLED.setCursor(row, col);
+  ecranOLED.print(text);
+  //ecranOLED.println("2022.04.29");
+  ecranOLED.display();
+  ecranOLED.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+  return 0;  
 }
 
 
@@ -150,7 +174,7 @@ void setup() {
   ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
 
   //updateInterval(uint32_t interval);
-  ntp.updateInterval(2000);
+  ntp.updateInterval(2000);  // every 2 seconds
   
   ntp.begin();
   Serial.println("start NTP");
@@ -167,7 +191,17 @@ void setup() {
 
 void loop() {
   ESP.wdtFeed();
+  ecranOLED.clearDisplay(); // clear buffer
+  
   bool res = ntp.update();
+  char s[16 + 1] = "                "; //16 times white space
+  //sprintf(s, "%-6d", loopCounter); // print to string ( minus is left justified)
+  ecranOLED.setCursor(0, 0);
+  sprintf(s, "%10d", ntp.epoch()); // print to string
+  ecranOLED.print("epoch() : ");
+  ecranOLED.println(s);
+  
+  
   Serial.print("LOOP - epoch() : ");
   Serial.print(ntp.epoch());
   
@@ -177,6 +211,21 @@ void loop() {
   
   Serial.print(" - ");
 
+  ecranOLED.print("hhmmss: ");
+
+  sprintf(s, "%1d", ntp.hours()/10); // print to string
+  ecranOLED.print(s);
+  sprintf(s, "%1d", ntp.hours()%10); // print to string
+  ecranOLED.print(s);
+  sprintf(s, "%1d", ntp.minutes()/10); // print to string
+  ecranOLED.print(s);
+  sprintf(s, "%1d", ntp.minutes()%10); // print to string
+  ecranOLED.print(s);
+  sprintf(s, "%1d", ntp.seconds()/10); // print to string
+  ecranOLED.print(s);
+  sprintf(s, "%1d", ntp.seconds()%10); // print to string
+  ecranOLED.println(s);
+  
   Serial.print(ntp.hours()/10);
   Serial.print(ntp.hours()%10);
   Serial.print(ntp.minutes()/10);
@@ -184,13 +233,24 @@ void loop() {
   Serial.print(ntp.seconds()/10);
   Serial.print(ntp.seconds()%10);
 
+  ecranOLED.print("formattedTime");
+  ecranOLED.println(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
+  
   Serial.print(" - ");
-
   Serial.print(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
+
+  Serial.print(" - ");  
+  Serial.print(ntp.ruleDST());
+
+  Serial.print(" - ");  
+  Serial.print(ntp.ruleSTD());
+
+  Serial.print(" - ");  
+  Serial.print(ntp.tzName());
 
   Serial.print(" - res : ");
   Serial.println(res);
 
-  
-  delay(5000);  // wait 5 seconds
+  ecranOLED.display();
+  delay(1000);  // wait 5 seconds
 }
