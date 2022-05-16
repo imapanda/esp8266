@@ -57,25 +57,25 @@ void display_time(){
   return;
 }
 void update_ntp(){
-  // add millis diff to local epoch
-
-  // Warning, delay() inside tickers does not work because because
-  // Ticker functions are using the underlying timer
-  Serial.println("update_ntp start");
-  Serial.print("local_epoch : ");
-  Serial.println(local_epoch);
-  digitalWrite(PIN_COLOR_1, LOW);
-  digitalWrite(PIN_COLOR_2, HIGH);
-
-//  // Update NTP here.
-//  ntp.update();
-
-  Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
-  Serial.println(ntp.formattedTime("%A %T")); // Www hh:mm:ss
-  
-  digitalWrite(PIN_COLOR_2, LOW);
-  digitalWrite(PIN_COLOR_1, HIGH);
-  Serial.println("update_ntp done");
+//  // add millis diff to local epoch
+//
+//  // Warning, delay() inside tickers does not work because because
+//  // Ticker functions are using the underlying timer
+//  Serial.println("update_ntp start");
+//  Serial.print("local_epoch : ");
+//  Serial.println(local_epoch);
+//  digitalWrite(PIN_COLOR_1, LOW);
+//  digitalWrite(PIN_COLOR_2, HIGH);
+//
+////  // Update NTP here.
+////  ntp.update();
+//
+//  Serial.println(ntp.formattedTime("%d. %B %Y")); // dd. Mmm yyyy
+//  Serial.println(ntp.formattedTime("%A %T")); // Www hh:mm:ss
+//  
+//  digitalWrite(PIN_COLOR_2, LOW);
+//  digitalWrite(PIN_COLOR_1, HIGH);
+//  Serial.println("update_ntp done");
 }
 
 
@@ -128,9 +128,9 @@ void loop() {
   Serial.print("LOOP - epoch() : ");
   Serial.print(ntp.epoch());
   
-  Serial.print(" - ");
+  //Serial.print(" - ");
   
-  Serial.print(local_epoch);
+  //Serial.print(local_epoch);
   
   Serial.print(" - ");
 
@@ -141,7 +141,7 @@ void loop() {
   Serial.print(ntp.seconds()/10);
   Serial.print(ntp.seconds()%10);
 
-  Serial.print(" - ");
+  Serial.print(" - formattedTime : ");
 
   Serial.println(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
   
