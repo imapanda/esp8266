@@ -1,5 +1,5 @@
 #include <Ticker.h>
-#include <NTP.h>  //https://github.com/sstaub/NTP
+#include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <Adafruit_SSD1306.h>
@@ -33,9 +33,18 @@ Adafruit_SSD1306 ecranOLED(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, SCREEN_RESET_PIN)
 
 // ----------------------------------------------------------------------
 // Time variables
+//
+// The time structure contains the following elements:
+//
+//    tm_sec: seconds after the minute;
+//    tm_min: minutes after the hour;
+//    tm_hour: hours since midnight;
+//    tm_mday: day of the month;
+//    tm_year: years since 1900;
+//    tm_wday: days since Sunday;
+//    tm_yday: days since January 1;
+//    tm_isdst: Daylight Saving Time flag;
 // ----------------------------------------------------------------------
-unsigned long local_epoch = 0;
-const unsigned int displayPeriodMS_clock = 10;
 #define DELAY_MS 2
 
 // ----------------------------------------------------------------------
@@ -68,8 +77,8 @@ Ticker NTP_sync_ticker;
 // ----------------------------------------------------------------------
 const char *ssid     = "RANTANPLAN";
 const char *password = "F5QiRNX1rCf9iqNaYg";
-WiFiUDP wifiUdp;
-NTP ntp(wifiUdp);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 
 
 // ----------------------------------------------------------------------
@@ -78,7 +87,7 @@ NTP ntp(wifiUdp);
 
 
 void display_time(){
-  local_epoch = millis();  // Update time
+  //local_epoch = millis();  // Update time
   return;
 }
 void update_ntp(){
@@ -169,14 +178,8 @@ void setup() {
     delay(250);
   }
   Serial.println("connected");
-  ntp.ruleDST("CEST", Last, Sun, Mar, 2, 120); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
-  //ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
-  ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
 
-  //updateInterval(uint32_t interval);
-  ntp.updateInterval(2000);  // every 2 seconds
-  
-  ntp.begin();
+  timeClient.begin();
   Serial.println("start NTP");
   
   segment_ticker.attach_ms(DELAY_MS,display_time);
@@ -193,83 +196,74 @@ void loop() {
   ESP.wdtFeed();
   ecranOLED.clearDisplay(); // clear buffer
   
-  bool res = ntp.update();
+  bool res = timeClient.update();
+  
+  //Get a time structure
+  time_t epochTime = timeClient.getEpochTime();
+  struct tm *ptm = gmtime ((time_t *)&epochTime);
+  
+  int monthDay = ptm->tm_mday;
+  Serial.print("Month day: ");
+  Serial.println(monthDay);
+
+  int currentMonth = ptm->tm_mon+1;
+  Serial.print("Month: ");
+  Serial.println(currentMonth);
+
+  int currentYear = ptm->tm_year+1900;
+  Serial.print("Year: ");
+  Serial.println(currentYear);
+  // HANDLE DST (day saving time) via setTimeOffset
+  // France starts 02:00 UTC on March 27
+  //        stops at 03:00 October 30, 2022
+  //
+  // EU Summer Time (Daylight Saving Time) rules, currently observed
+  //
+  //    Start: Last Sunday in March
+  //    End: Last Sunday in October
+  
+  
+  if(currentMonth == 3 && monthDay > 24 && 
+  //&& currentMonth <= 10
+
+  
   char s[16 + 1] = "                "; //16 times white space
   //sprintf(s, "%-6d", loopCounter); // print to string ( minus is left justified)
   ecranOLED.setCursor(0, 0);
-  sprintf(s, "%10d", ntp.epoch()); // print to string
-  ecranOLED.print("epoch() : ");
+  sprintf(s, "%10d", timeClient.getEpochTime()); // print to string
+  ecranOLED.print("epoch()  : ");
   ecranOLED.println(s);
-  
-  
-  Serial.print("LOOP - epoch() : ");
-  Serial.print(ntp.epoch());
-  
-  Serial.print(" - ");
-  
-  Serial.print(local_epoch);
-  
-  Serial.print(" - ");
 
-  ecranOLED.print("hhmmss: ");
+  ecranOLED.print("hhmmss :       ");
 
-  sprintf(s, "%1d", ntp.hours()/10); // print to string
+  sprintf(s, "%1d", timeClient.getHours()/10); // print to string
   ecranOLED.print(s);
-  sprintf(s, "%1d", ntp.hours()%10); // print to string
+  sprintf(s, "%1d", timeClient.getHours()%10); // print to string
   ecranOLED.print(s);
-  sprintf(s, "%1d", ntp.minutes()/10); // print to string
+  sprintf(s, "%1d", timeClient.getMinutes()/10); // print to string
   ecranOLED.print(s);
-  sprintf(s, "%1d", ntp.minutes()%10); // print to string
+  sprintf(s, "%1d", timeClient.getMinutes()%10); // print to string
   ecranOLED.print(s);
-  sprintf(s, "%1d", ntp.seconds()/10); // print to string
+  sprintf(s, "%1d", timeClient.getSeconds()/10); // print to string
   ecranOLED.print(s);
-  sprintf(s, "%1d", ntp.seconds()%10); // print to string
+  sprintf(s, "%1d", timeClient.getSeconds()%10); // print to string
   ecranOLED.println(s);
+
+  ecranOLED.print(  "Format time: ");
+  ecranOLED.print(timeClient.getFormattedTime()); // Www hh:mm:ss
+
+
   
-  Serial.print(ntp.hours()/10);
-  Serial.print(ntp.hours()%10);
-  Serial.print(ntp.minutes()/10);
-  Serial.print(ntp.minutes()%10);
-  Serial.print(ntp.seconds()/10);
-  Serial.print(ntp.seconds()%10);
 
-  ecranOLED.print("formattedTime");
-  ecranOLED.println(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
-  
-  Serial.print(" - ");
-  Serial.print(ntp.formattedTime("%H%M%S")); // Www hh:mm:ss
-
-  Serial.print(" - ");  
-  Serial.print(ntp.ruleDST());
-
-  Serial.print(" - ");  
-  Serial.print(ntp.ruleSTD());
-
-  Serial.print(" - ");  
-  Serial.print(ntp.tzName());
-
-  Serial.print(" - res : ");
-  Serial.println(res);
+  ecranOLED.print("NTP_CLIENT ");
+  sprintf(s, "%02d/", monthDay);
+  ecranOLED.print(s);
+  sprintf(s, "%02d/", currentMonth);
+  ecranOLED.print(s);
+  sprintf(s, "%04d", currentYear);
+  ecranOLED.println(s);
 
   ecranOLED.display();
-  delay(1000);  // wait 5 seconds
-
-
-// BUG :
-//
-//LOOP - epoch() : 1652117155 - 573509 - 192555 - 192555 - Sun Mar 27 02:00:00 2022
-// - Sun Oct 30 03:00:00 2022
-// - CEST - res : 1
-//LOOP - epoch() : 1652117156 - 574527 - 192556 - 192556 - Sun Mar 27 02:00:00 2022
-// - Sun Oct 30 03:00:00 2022
-// - CEST - res : 0
-//LOOP - epoch() : 2085978496 - 575575 - 072816 - 072816 - Sun Mar 30 02:00:00 2036
-// - Sun Oct 26 03:00:00 2036
-// - CET - res : 1
-//LOOP - epoch() : 2085978497 - 576595 - 072817 - 072817 - Sun Mar 30 02:00:00 2036
-// - Sun Oct 26 03:00:00 2036
-// - CET - res : 0
-
-
+  delay(.1 * 1000);  // wait a bit
   
 }
